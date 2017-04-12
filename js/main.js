@@ -1,8 +1,10 @@
 //PubNub
 
-var createHero = 1;
 
 window.currentChannelName;
+
+window.UniqueID = PubNub.generateUUID();
+console.log(UniqueID);
 
 window.createMyPubNub = function(currentLevel) {
 	window.currentChannelName = 'realtimephaser' + currentLevel;
@@ -11,8 +13,6 @@ window.globalUnsubscribe();
 	}
 	catch(err){}
 
-window.UniqueID = PubNub.generateUUID();
-console.log(UniqueID);
 window.pubnub = new PubNub({
     publishKey : 'pub-c-1c688f67-2435-4622-96e3-d30dfd9d0b37',
     subscribeKey : 'sub-c-e4c02264-1e13-11e7-894d-0619f8945a4f',
@@ -27,8 +27,7 @@ pubnub.subscribe({
 
 window.listener = {
     status: function(statusEvent) {
-        console.log(statusEvent);
-        createHero = 1;
+        //console.log(statusEvent);
 		document.getElementById('sendMessage').onclick = (function(){
 			console.log('clicked');
          pubnub.publish(
@@ -52,26 +51,33 @@ window.listener = {
     	}
         console.log(message.message.uuid, message.message.position);
     	if(message.message.position && window.globalOtherHeros.has(message.message.uuid)) {
-    		var op = window.globalOtherHeros.get(message.message.uuid);
-    		console.log('has op', op);
-    		op.position.set(message.message.position.x, message.message.position.y);
-    	//op.body.velocity.set(message.message.velocity.x, message.message.velocity.y);
+    		var otherplayer = window.globalOtherHeros.get(message.message.uuid);
+    		//console.log('has otherplayer', otherplayer);
+    		otherplayer.position.set(message.message.position.x, message.message.position.y);
+    	//otherplayer.body.velocity.set(message.message.velocity.x, message.message.velocity.y);
     		if(message.message.keyMessage.up === 'down') {
-    			op.jump();
-    			op.jumpStart = Date.now();
+    			otherplayer.jump();
+    			otherplayer.jumpStart = Date.now();
     		}	else	if(message.message.keyMessage.up === 'up') {
-    			op.jumpStart = 0;
+    			otherplayer.jumpStart = 0;
     		}
     		if(message.message.keyMessage.left === 'down') {
-    			op.goingLeft = true;
+    			otherplayer.goingLeft = true;
     		}	else	if(message.message.keyMessage.left === 'up') {
-    			op.goingLeft = false;
+    			otherplayer.goingLeft = false;
     		}
     		if(message.message.keyMessage.right === 'down') {
-    			op.goingRight = true;
+    			otherplayer.goingRight = true;
     		}	else	if(message.message.keyMessage.right === 'up') {
-    			op.goingRight = false;
+    			otherplayer.goingRight = false;
     		}
+            if (message.message.death === true){
+                console.log(message.message.death)
+
+                //otherplayer.events.onKilled.addOnce(function () {
+                    //this.game.state.restart(true, false, {level: this.level});
+                //}, this);
+            }
     	}
     },
     presence: function(presenceEvent, data) {
@@ -115,14 +121,14 @@ window.onbeforeunload = function(e) {
 //Unscribe people from PubNub network
 window.globalUnsubscribe = function(uuid) {
 	try {
-    console.log('unsubscribing');
+    console.log('unsubscribing', window.currentChannelName);
     pubnub.unsubscribe({
         channels: [window.currentChannelName],
         withPresence: true
     });
     pubnub.removeListener(listener);
 	} catch(err) {
-		
+		console.log("Failed to UnSub");
 	}
 }
 pubnub.addListener(listener);
@@ -251,9 +257,6 @@ Hero.prototype._getAnimationName = function () {
 //
 // Spider (enemy)
 //
-//PubNubPlayer = {};
-//this.PubNubPlayer = new Hero(this.game, 21, 525);
-//this.game.add.existing(this.hero);
 
 function Spider(game, x, y) {
     Phaser.Sprite.call(this, game, x, y, 'spider');
@@ -366,8 +369,9 @@ PlayState.init = function (data) {
 
 PlayState.create = function () {
 		window.globalGameState = this;
-		console.log('window.globalGameState created');
+		console.log('window.globalGameState created' , this.level);
 		window.createMyPubNub(this.level);
+
 
     // fade in (from black)
     this.camera.flash('#000000');
@@ -409,18 +413,20 @@ PlayState._handleCollisions = function () {
     this.game.physics.arcade.collide(this.spiders, this.enemyWalls);
     this.game.physics.arcade.collide(this.hero, this.platforms);
 		for(let uuid of globalOtherHeros.keys()) {
-			var op = globalOtherHeros.get(uuid);
-			this.game.physics.arcade.collide(op, this.platforms);
-			this.game.physics.arcade.overlap(op, this.coins, this._onHeroVsCoin, null, this);
-            this.game.physics.arcade.overlap(op, this.key, this._onHeroVsKey, null, this);
-    /*this.game.physics.arcade.overlap(op, this.door, this._onHeroVsDoor,
-        function (op, door) {
-            return this.hasKey && op.body.touching.down;
+			var otherplayer = globalOtherHeros.get(uuid);
+			this.game.physics.arcade.collide(otherplayer, this.platforms);
+			this.game.physics.arcade.overlap(otherplayer, this.coins, this._onHeroVsCoin, null, this);
+            this.game.physics.arcade.overlap(otherplayer, this.key, this._onHeroVsKey, null, this);
+    /*this.game.physics.arcade.overlap(otherplayer, this.door, this._onHeroVsDoor,
+        function (otherplayer, door) {
+            return this.hasKey && otherplayer.body.touching.down;
         }, this);*/
 				
 				//send a message that i left FIXME
-    /* this.game.physics.arcade.overlap(this.hero2, this.spiders,
-        this._onHeroVsEnemy, null, this);*/  
+   // this.game.physics.arcade.overlap(otherplayer, this.spiders,
+       // this._onHeroVsEnemy, this);
+    
+
 				//  send me message that you died FIXME
 		}
 
@@ -439,8 +445,7 @@ PlayState._handleCollisions = function () {
 
 
     // collision: hero vs enemies (kill or die)
-    this.game.physics.arcade.overlap(this.hero, this.spiders,
-        this._onHeroVsEnemy, null, this);
+    this.game.physics.arcade.overlap(this.hero, this.spiders, this._onHeroVsEnemy, null, this);
 
 };
 
@@ -450,17 +455,17 @@ var keyStates = {
 
 
 function sendKeyMessage(keyMessage) {
-     pubnub.publish(
-        {
-            message: { 
-                uuid: UniqueID,
-					keyMessage: keyMessage,
-					position: window.globalMyHero.position,
-					velocity: window.globalMyHero.body.velocity
-            },
-            channel: window.currentChannelName,
-            sendByPost: false, // true to send via posts
-        });		
+    pubnub.publish(
+    {
+        message: { 
+            uuid: UniqueID,
+    			keyMessage: keyMessage,
+    			position: window.globalMyHero.position,
+    			velocity: window.globalMyHero.body.velocity
+        },
+        channel: window.currentChannelName,
+        sendByPost: false, // true to send via posts
+    });		
 }
 
 
@@ -468,13 +473,13 @@ PlayState._handleInput = function () {
     if(this.hero){ //Added this so we can control spawning of heros
     	if (this.keys.left.isDown) {
     		if(!keyStates.leftIsDown) {
-    			console.log('left pushed');
+    			//console.log('left pushed');
     			sendKeyMessage({left: 'down'});
     		}
     		keyStates.leftIsDown = true;
     	} else {
     		if(keyStates.leftIsDown) {
-    			console.log('left un-pushed');
+    			//console.log('left un-pushed');
     			sendKeyMessage({left: 'up'});
     		}
     		keyStates.leftIsDown = false;
@@ -482,13 +487,13 @@ PlayState._handleInput = function () {
 
     	if (this.keys.right.isDown) {
     		if(!keyStates.rightIsDown) {
-    			console.log('right pushed');
+    			//console.log('right pushed');
     			sendKeyMessage({right: 'down'});
     		}
     		keyStates.rightIsDown = true;
     	} else {
     		if(keyStates.rightIsDown) {
-    			console.log('right un-pushed');
+    			//console.log('right un-pushed');
     			sendKeyMessage({right: 'up'});
     		}
     		keyStates.rightIsDown = false;
@@ -496,14 +501,14 @@ PlayState._handleInput = function () {
 
     	if (this.keys.up.isDown) {
     		if(!keyStates.upIsDown) {
-    			console.log('up pushed');
+    			//console.log('up pushed');
     			sendKeyMessage({up: 'down'});
     			globalMyHero.jump();
     		}
     		keyStates.upIsDown = true;
     	} else {
     		if(keyStates.upIsDown) {
-    			console.log('up un-pushed');
+    			//console.log('up un-pushed');
     			sendKeyMessage({up: 'up'});
     		}
     		keyStates.upIsDown = false;
@@ -530,20 +535,20 @@ PlayState._handleInput = function () {
         }
 				
 		for(let uuid of globalOtherHeros.keys()) {
-			var op = globalOtherHeros.get(uuid);
-			if(Date.now() + JUMP_HOLD <= op.jumpStart) {
-				//op.jump();
+			var otherplayer = globalOtherHeros.get(uuid);
+			if(Date.now() + JUMP_HOLD <= otherplayer.jumpStart) {
+				//otherplayer.jump();
 			} else {
-				//op.stopJumpBoost();
+				//otherplayer.stotherplayerJumpBoost();
 			}
-            if (op.goingLeft) { // move hero left
-                op.move(-1);			
+            if (otherplayer.goingLeft) { // move hero left
+                otherplayer.move(-1);			
             }
-            else if (op.goingRight) { // move hero right
-                op.move(1);
+            else if (otherplayer.goingRight) { // move hero right
+                otherplayer.move(1);
             }
             else { // stop
-                op.move(0);
+                otherplayer.move(0);
             }
 		}
     }
@@ -578,10 +583,11 @@ PlayState._onHeroVsEnemy = function (hero, enemy) {
       //  this.sfx.stomp.play();
     }
     else { // game over -> play dying animation and restart the game
-        hero.die();
+        hero.die();     
+
         //this.sfx.stomp.play();
         hero.events.onKilled.addOnce(function () {
-            this.game.state.restart(true, false, {level: this.level});
+            this.game.state.restart(true, false, {level: this.level - 1});
         }, this);
 
         // NOTE: bug in phaser in which it modifies 'touching' when
@@ -609,12 +615,13 @@ PlayState._goToNextLevel = function () {
         // change to next level
         this.game.state.restart(true, false, {
             level: this.level + 1
+
         });
     }, this);
 };
 
 PlayState._loadLevel = function (data) {
-    console.log(data)
+    //console.log(data)
     // create all the groups/layers that we need
     this.bgDecoration = this.game.add.group();
     this.platforms = this.game.add.group();
@@ -646,6 +653,7 @@ PlayState._loadLevel = function (data) {
 };
 
 PlayState._addOtherCharacter = function(uuid) {
+	if(globalOtherHeros.has(uuid)) { return; }
 	console.log('_addOtherCharacter', uuid);
 	this.hero2 = new Hero(this.game, 10, 10);
 	this.game.add.existing(this.hero2);
@@ -666,19 +674,13 @@ PlayState._spawnCharacters = function (data) {
         this.spiders.add(sprite);
     }, this);
 
-    if(createHero == 1){
         this.hero = new Hero(this.game, 10, 10);
-				window.globalMyHero = this.hero;
+			window.globalMyHero = this.hero;
 			window.globalOtherHeros = this.otherHeros = new Map();
         this.game.add.existing(this.hero);
-        createHero = 0;
-      //this._spawnHero();
-    }
 
 };
 
-
-//this._spawnHero();
 PlayState._spawnPlatform = function (platform) {
     let sprite = this.platforms.create(
         platform.x, platform.y, platform.image);
