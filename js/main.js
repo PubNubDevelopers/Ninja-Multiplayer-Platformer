@@ -9,7 +9,7 @@ console.log(UniqueID);
 window.createMyPubNub = function(currentLevel) {
 	window.currentChannelName = 'realtimephaser' + currentLevel;
 	try {
-window.globalUnsubscribe();
+//window.globalUnsubscribe();
 	}
 	catch(err){}
 
@@ -28,7 +28,7 @@ pubnub.subscribe({
 window.listener = {
     status: function(statusEvent) {
         //console.log(statusEvent);
-		document.getElementById('sendMessage').onclick = (function(){
+		/*document.getElementById('sendMessage').onclick = (function(){
 			console.log('clicked');
          pubnub.publish(
             {
@@ -39,13 +39,14 @@ window.listener = {
                 channel: window.currentChannelName,
                 sendByPost: false, // true to send via posts
             });					
-		});
+		});*/
 
     },
     message: function(message) {
     	if(message.message.uuid === UniqueID) {
     		return; //this blocks drawing a new character set by the server for ourselve, to lower latency
     	}
+        console.log("message",message)
     	if(!window.globalOtherHeros.has(message.message.uuid)) {
     		window.globalGameState._addOtherCharacter(message.message.uuid);
     	}
@@ -86,7 +87,7 @@ window.listener = {
         {
 
             if(presenceEvent.uuid != UniqueID){
-                console.log("join")
+                console.log("join", data)
 				sendKeyMessage({});
                 /* pubnub.publish(
                     {
@@ -220,9 +221,9 @@ Hero.prototype.freeze = function () {
 Hero.prototype.die = function () {
     this.alive = false;
     this.body.enable = false;
-
     this.animations.play('die').onComplete.addOnce(function () {
         this.kill();
+        console.log("die")
     }, this);
 };
 
@@ -353,6 +354,7 @@ LoadingState.create = function () {
 PlayState = {};
 
 const LEVEL_COUNT = 2;
+var keyCollected = false;
 
 PlayState.init = function (data) {
     this.keys = this.game.input.keyboard.addKeys({
@@ -363,7 +365,7 @@ PlayState.init = function (data) {
 
 		
     this.coinPickupCount = 0;
-    this.hasKey = false;
+    keyCollected = false;
     this.level = (data.level || 0) % LEVEL_COUNT;
 };
 
@@ -373,7 +375,7 @@ PlayState.create = function () {
 		window.createMyPubNub(this.level);
 
 
-    // fade in (from black)
+    // fade in  (from black)
     this.camera.flash('#000000');
 
     // create sound entities
@@ -401,12 +403,13 @@ PlayState.update = function () {
 
     // update scoreboards
     this.coinFont.text = `x${this.coinPickupCount}`;
-    this.keyIcon.frame = this.hasKey ? 1 : 0;
+    this.keyIcon.frame = keyCollected ? 1 : 0;
 };
 
 PlayState.shutdown = function () {
     //this.bgm.stop();
 };
+
 
 PlayState._handleCollisions = function () {
     this.game.physics.arcade.collide(this.spiders, this.platforms);
@@ -417,14 +420,14 @@ PlayState._handleCollisions = function () {
 			this.game.physics.arcade.collide(otherplayer, this.platforms);
 			this.game.physics.arcade.overlap(otherplayer, this.coins, this._onHeroVsCoin, null, this);
             this.game.physics.arcade.overlap(otherplayer, this.key, this._onHeroVsKey, null, this);
-    /*this.game.physics.arcade.overlap(otherplayer, this.door, this._onHeroVsDoor,
-        function (otherplayer, door) {
-            return this.hasKey && otherplayer.body.touching.down;
-        }, this);*/
+            this.game.physics.arcade.overlap(otherplayer, this.door, this._onHeroVsDoor,
+            function (otherplayer, door) {
+                return keyCollected && otherplayer.body.touching.down;
+            }, this);
 				
 				//send a message that i left FIXME
-   // this.game.physics.arcade.overlap(otherplayer, this.spiders,
-       // this._onHeroVsEnemy, this);
+   //this.game.physics.arcade.overlap(otherplayer, this.spiders,
+     //  this._onHeroVsEnemy, this);
     
 
 				//  send me message that you died FIXME
@@ -440,12 +443,13 @@ PlayState._handleCollisions = function () {
     this.game.physics.arcade.overlap(this.hero, this.door, this._onHeroVsDoor,
         // ignore if there is no key or the player is on air
         function (hero, door) {
-            return this.hasKey && hero.body.touching.down;
+            return keyCollected && hero.body.touching.down;
         }, this);
 
 
     // collision: hero vs enemies (kill or die)
     this.game.physics.arcade.overlap(this.hero, this.spiders, this._onHeroVsEnemy, null, this);
+    //this.game.physics.arcade.overlap(otherplayer, this.spiders, this._onHeroVsEnemy, null, this);
 
 };
 
@@ -461,7 +465,8 @@ function sendKeyMessage(keyMessage) {
             uuid: UniqueID,
     			keyMessage: keyMessage,
     			position: window.globalMyHero.position,
-    			velocity: window.globalMyHero.body.velocity
+    			velocity: window.globalMyHero.body.velocity,
+                keyCollected: keyCollected
         },
         channel: window.currentChannelName,
         sendByPost: false, // true to send via posts
@@ -470,6 +475,7 @@ function sendKeyMessage(keyMessage) {
 
 
 PlayState._handleInput = function () {
+  //  logCurrentState(this.game);
     if(this.hero){ //Added this so we can control spawning of heros
     	if (this.keys.left.isDown) {
     		if(!keyStates.leftIsDown) {
@@ -559,18 +565,55 @@ PlayState._handleInput = function () {
 function MyClass(name){
     this.name = name;
     console.log(name);
-}
-
-//MyClass.prototype._handleMessages.call(this);
+};
 
 PlayState._onHeroVsKey = function (hero, key) {
     //this.sfx.key.play();
     key.kill();
-    this.hasKey = true;
+    keyCollected = true;
+    sendKeyMessage(keyCollected)
 };
+
+function logCurrentState (game, coin) {
+
+    //var temp = game.cache.getKeys()
+    //console.log(temp
+    //var test = game.cache.getData();
+    //console.log(test)
+
+    //var state = game.cache.getJSON("level:0");
+    //var dank = game.cache.checkJSONKey("level:0:coins:0")
+    //console.log(dank)
+    //console.log(state)
+    var levelCache = game.cache.getJSON("level:0");
+
+    //if (coin) {
+    //   debugger;
+    //}
+    console.log("before", levelCache)
+    var newCoins = [];
+
+    levelCache.coins.forEach((stateCoin) => {
+        console.log("stateCoin.x", stateCoin.x, coin.position.x, stateCoin.y, coin.position.y)
+        //console.log("stateCoin.y", stateCoin.y, coin.position.y)
+       // if ((stateCoin.x !== coin.x) && (stateCoin.y !== coin.y)) {
+        //    newCoins.push(stateCoin);
+        //}
+    })
+
+    levelCache.coins = newCoins;
+
+    //var jsonobj = game.cache.removeJSON();
+    console.log("after", levelCache)
+    //console.log(jsonobj)
+    //console.log(jsonobj)
+    
+   //console.log("hero", state.hero);
+}
 
 PlayState._onHeroVsCoin = function (hero, coin) {
     //this.sfx.coin.play();
+    logCurrentState(this.game, coin);
     coin.kill();
     this.coinPickupCount++;
 };
@@ -587,6 +630,7 @@ PlayState._onHeroVsEnemy = function (hero, enemy) {
 
         //this.sfx.stomp.play();
         hero.events.onKilled.addOnce(function () {
+            window.globalUnsubscribe();
             this.game.state.restart(true, false, {level: this.level - 1});
         }, this);
 
@@ -612,6 +656,7 @@ PlayState._onHeroVsDoor = function (hero, door) {
 PlayState._goToNextLevel = function () {
     this.camera.fade('#000000');
     this.camera.onFadeComplete.addOnce(function () {
+        window.globalUnsubscribe();
         // change to next level
         this.game.state.restart(true, false, {
             level: this.level + 1
@@ -769,7 +814,7 @@ window.onload = function () {
     let game = new Phaser.Game(960, 600, Phaser.AUTO, 'game');
     game.state.disableVisibilityChange = true;
     game.currentRenderOrderID;
-    game.state.add('play', PlayState);
+    game.state.add('play', PlayState);          
     game.state.add('loading', LoadingState);
     game.state.start('loading');
 };
