@@ -638,7 +638,7 @@ var newCoins = []
 
 
 function fireCoins() {
-   /* var message = { 
+   var message = { 
             uuid: UniqueID,
             coinCache: window.globalLevelState.coinCache,
             currentLevel: window.globalCurrentLevel,
@@ -651,7 +651,7 @@ function fireCoins() {
         
         channel: window.currentFireChannelName,
         sendByPost: false, // true to send via posts
-    });*/
+    });
 }
 
 function logCurrentStateCoin (game, coin) {
