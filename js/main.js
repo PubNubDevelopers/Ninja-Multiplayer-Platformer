@@ -361,7 +361,7 @@ LoadingState.preload = function () {
 
     this.game.load.json('level:0', 'data/level00.json');
     this.game.load.json('level:1', 'data/level01.json');
-    this.game.load.json('level:2', 'data/level01.json');
+    this.game.load.json('level:2', 'data/level02.json');
 
     this.game.load.image('font:numbers', 'images/numbers.png');
 
@@ -638,7 +638,7 @@ var newCoins = []
 
 
 function fireCoins() {
-    var message = { 
+   /* var message = { 
             uuid: UniqueID,
             coinCache: window.globalLevelState.coinCache,
             currentLevel: window.globalCurrentLevel,
@@ -651,7 +651,7 @@ function fireCoins() {
         
         channel: window.currentFireChannelName,
         sendByPost: false, // true to send via posts
-    });
+    });*/
 }
 
 function logCurrentStateCoin (game, coin) {
@@ -766,9 +766,14 @@ PlayState._removeOtherCharacter = function(uuid) {
 PlayState._spawnCharacters = function (data) {
         this.hero = new Hero(this.game, 10, 10);
         this.hero.body.bounce.setTo(0);
+        playerText = this.game.add.text(this.hero.position.x - 10, this.hero.position.y - 550, "me",  {fill: '#000000', fontSize: '15px' });
+        playerText.anchor.set(0.5)
+        this.hero.addChild(playerText);
+        console.log(playerText.position.x, playerText.position.y)
 		window.globalMyHero = this.hero;
 		window.globalOtherHeros = this.otherHeros = new Map();
         this.game.add.existing(this.hero);
+
         //globalMyHero.alpha = 1; //compensating for lag
         sendKeyMessage({});
 
