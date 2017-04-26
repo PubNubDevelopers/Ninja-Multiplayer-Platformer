@@ -1,9 +1,10 @@
-# Ninja Real Time Multiplayer Platformer Puzzle Game
+# Ninja Multiplayer Platformer Game in Real Time #
 
 ## Table of Contents
 * [Synopsis](#synopsis)
 * [Introduction to Phaser](#phaser)
 * [Introduction to PubNub](#pubnub)
+* [Getting Started](#getting-started)
 * [Credits](#credits)
 
 ## <a name="synopsis"></a>Synopsis
@@ -23,8 +24,29 @@ PubNub is a global Data Stream Network (DSN) that allows developers to build rea
 
 PubNub’s Pub/Sub and Presence is used in this demo to send information on player movements and occupancy in each level.  PubNub Blocks is used as a state machine to detect if the coins of been collected by a player in each level.  PubNub Blocks updates the JSON level object depending upon what actions the players take in the game.  <a href="http://pubnub.com">Learn More</a>
 
+## <a name="getting-started"></a> Getting Started
+In order to start the development process, you are going to need three things:
+* A text editor (I recommend <https://www.sublimetext.com/>)
+* Terminal / Console
+* A local web server (then eventually a public web server to share your project with friends)
+* A PubNub Account (<a href="http://pubnub.com">Sign Up for Free</a>)
+
+Create a new folder anywhere you wish, for simplicity create it on your Desktop.  If you have Mac OS or Linux (or have Python installed), open up your Terminal Application and type in:
+
+``
+python -m SimpleHTTPServer 8000
+``
+
+If you are using Windows download <a href="https://www.apachefriends.org/index.html">XAMPP</a>.  There are some great tutorials out there on how to setup XAMPP on your machine.
+
+Once you have your server up and running, go to ``http://localhost:8000/`` on your machine and navigate to your project directory.  You are ready to start coding! 
+
+Now in order to get you setup with PubNub, navigate to the <a href="http://pubnub.com">PubNub Website</a> and create an account with your Google login.  Once you are in the dashboard, name your application whatever you wish, and click the Create New App button.  Once you create the application, click on the application to few the key information.  You should see that you have two keys, a Publish Key, and a Subscribe Key.  Click on the demo keyset, and it should load up a page that shows your keys in addition to Application Add-Ons.  In the Application Add-Ons section, turn <b>ON</b> <u>Presence</u> and check <b>Generate Leave on TCP FIN or RST</b> and <b>Global Here Now</b>.  Also turn <b>ON</b> <u>PubNub Blocks</u>.  Leave the page open for future reference once we start writting our code, we are going to need those PubNub keys!
+
+
 ## <a name="credits"></a>Credits
-* Jordan Schuetz <schuetz@pubnub.com>
-* <a href="https://hacks.mozilla.org/2017/04/html5-games-workshop-make-a-platformer-game-with-javascript/?utm_source=gamedevjsweekly&utm_medium=email">Belén Albeza</a>
+* <a href="https://github.com/JordanSchuetz">Jordan Schuetz </a>(Contact me if you have questions <schuetz@pubnub.com>)
+* <a href="https://twitter.com/ladybenko">Belén Albeza</a>
+* <a href="https://github.com/codepilot">Daniel Kluss</a>
 
 
