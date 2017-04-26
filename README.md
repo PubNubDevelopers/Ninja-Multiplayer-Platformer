@@ -1,5 +1,7 @@
 # Ninja Multiplayer Platformer Game in Real Time #
 
+## Play Now: https://pubnub.github.io/Ninja-Multiplayer-Platformer/
+
 ## Table of Contents
 * [Synopsis](#synopsis)
 * [Introduction to Phaser](#phaser)
