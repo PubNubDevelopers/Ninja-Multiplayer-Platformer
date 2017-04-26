@@ -1,5 +1,7 @@
 # Ninja Multiplayer Platformer Game in Real Time #
 
+## Play Now: https://pubnub.github.io/Ninja-Multiplayer-Platformer/
+
 ## Table of Contents
 * [Synopsis](#synopsis)
 * [Introduction to Phaser](#phaser)
@@ -25,7 +27,7 @@ PubNub is a global Data Stream Network (DSN) that allows developers to build rea
 PubNub’s Pub/Sub and Presence is used in this demo to send information on player movements and occupancy in each level.  PubNub Blocks is used as a state machine to detect if the coins of been collected by a player in each level.  PubNub Blocks updates the JSON level object depending upon what actions the players take in the game.  <a href="http://pubnub.com">Learn More</a>
 
 ## <a name="getting-started"></a> Getting Started
-In order to start the development process, you are going to need three things:
+In order to start the development process, you are going to need a few things:
 * A text editor (I recommend <https://www.sublimetext.com/>)
 * Terminal / Console
 * A local web server (then eventually a public web server to share your project with friends)
