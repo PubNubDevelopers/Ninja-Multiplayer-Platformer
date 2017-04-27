@@ -1,7 +1,7 @@
 # Ninja Multiplayer Platformer Game in Real Time #
 
 ## Play Now: https://pubnub.github.io/Ninja-Multiplayer-Platformer/
-
+![Screenshot](readmepics/screenshot1.png)
 ## Table of Contents
 * [Synopsis](#synopsis)
 * [Introduction to Phaser](#phaser)
@@ -43,7 +43,7 @@ If you are using Windows download <a href="https://www.apachefriends.org/index.h
 
 Once you have your server up and running, go to ``http://localhost:8000/`` on your machine and navigate to your project directory.  You are ready to start coding! 
 
-Now in order to get you setup with PubNub, navigate to the <a href="http://pubnub.com">PubNub Website</a> and create an account with your Google login.  Once you are in the dashboard, name your application whatever you wish, and click the Create New App button.  Once you create the application, click on the application to few the key information.  You should see that you have two keys, a Publish Key, and a Subscribe Key.  Click on the demo keyset, and it should load up a page that shows your keys in addition to Application Add-Ons.  In the Application Add-Ons section, turn <b>ON</b> <u>Presence</u> and check <b>Generate Leave on TCP FIN or RST</b> and <b>Global Here Now</b>.  Also turn <b>ON</b> <u>PubNub Blocks</u>.  Leave the page open for future reference once we start writting our code, we are going to need those PubNub keys!
+Now in order to get you setup with PubNub, navigate to the <a href="http://pubnub.com">PubNub Website</a> and create an account with your Google login.  Once you are in the dashboard, name your application whatever you wish, and click the Create New App button.  Once you create the application, click on the application to few the key information.  You should see that you have two keys, a Publish Key, and a Subscribe Key.  Click on the demo keyset, and it should load up a page that shows your keys in addition to Application Add-Ons.  In the Application Add-Ons section, turn <b>ON</b> <em>Presence</em> and check <b>Generate Leave on TCP FIN or RST</b> and <b>Global Here Now</b>.  Also turn <b>ON</b> <em>PubNub Blocks</em>.  Leave the page open for future reference once we start writting our code, we are going to need those PubNub keys!
 
 
 ## <a name="credits"></a>Credits
