@@ -1,0 +1,14 @@
+{
+  "name": "ninja-multiplayer-platformer",
+  "homepage": "https://github.com/pubnub/Ninja-Multiplayer-Platformer",
+  "authors": [
+    "jordanschuetz <jordan@ninjapigstudios.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "dependencies": {
+    "phaser": "^2.6.2",
+    "pubnub": "^4.8.0"
+  }
+}
