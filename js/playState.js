@@ -15,7 +15,7 @@ PlayState.init = function (data) {
         up: Phaser.KeyCode.UP
     });
 
-		
+
     this.coinPickupCount = 0;
     keyCollected = false;
     this.level = (data.level || 0);
@@ -106,7 +106,7 @@ PlayState._handleCollisions = function () {
 };
 
 var keyStates = {
-	
+
 };
 
 
@@ -114,7 +114,7 @@ function sendKeyMessage(keyMessage) {
     if(window.globalMyHero){
         pubnub.publish(
         {
-            message: { 
+            message: {
                 uuid: UniqueID,
     			keyMessage: keyMessage,
     			position: window.globalMyHero.position,
@@ -122,7 +122,7 @@ function sendKeyMessage(keyMessage) {
             },
             channel: window.currentChannelName,
             sendByPost: false, // true to send via posts
-        });		
+        });
         //console.log("send message!")
     }else{
         console.log("Player doesn't exsist so don't set position")
@@ -176,8 +176,8 @@ PlayState._handleInput = function () {
         		}
         		keyStates.upIsDown = false;
         	}
-        }		
-		
+        }
+
         if (this.keys.left.isDown) { // move hero left
             this.hero.move(-1);
         }
@@ -196,14 +196,14 @@ PlayState._handleInput = function () {
             //if (didJump) { this.sfx.jump.play();}
         }
 
-				
+
 		for(let uuid of globalOtherHeros.keys()) {
 			var otherplayer = globalOtherHeros.get(uuid);
 			if(Date.now() + JUMP_HOLD <= otherplayer.jumpStart) {
 				//otherplayer.jump();
 			}
             if (otherplayer.goingLeft) { // move hero left
-                otherplayer.move(-1);			
+                otherplayer.move(-1);
             }
             else if (otherplayer.goingRight) { // move hero right
                 otherplayer.move(1);
@@ -234,7 +234,7 @@ var newCoins = []
 
 
 function fireCoins() {
-   var message = { 
+   var message = {
             uuid: UniqueID,
             coinCache: window.globalLevelState.coinCache,
             currentLevel: window.globalCurrentLevel,
@@ -244,7 +244,7 @@ function fireCoins() {
     pubnub.fire(
     {
         message: message,
-        
+
         channel: window.currentFireChannelName,
         sendByPost: false, // true to send via posts
     });
@@ -297,10 +297,10 @@ PlayState._goToNextLevel = function () {
     this.camera.onFadeComplete.addOnce(function () {
         window.globalUnsubscribe();
         // change to next level
-      //window.globalCurrentLevel = this.level + 1; 
+      //window.globalCurrentLevel = this.level + 1;
       //console.log("level we are going to", this.level +1)
 
-      tidCounter = false;
+      window.updateOccupancyCounter = false;
       if(this.level === 2){
         createMyPubNub(0);
       }else{
@@ -356,7 +356,7 @@ PlayState._removeOtherCharacter = function(uuid) {
 	if(!globalOtherHeros.has(uuid)) { return; }
 	globalOtherHeros.get(uuid).destroy();
 	globalOtherHeros.delete(uuid);
-	
+
 }
 
 PlayState._spawnCharacters = function (data) {
