@@ -6,15 +6,107 @@
     <script src="./bower_components/pubnub/dist/web/pubnub.min.js"></script>
     <script src="./bower_components/phaser/build/phaser.min.js"></script>
     <script src="./js/main.js"></script>
+    <style>
+    .container1{
+      float: left;
+      width: 35%;
+      height: 250px;
+      z-index: 4;
+    }
+    .container2{
+      float: left;
+      width: 65%;
+      height: 250px;
+      z-index: 4;
+    }
+    .container3{
+      float: left;
+      width: 65%;
+      height: 250px;
+      z-index: 3;
+    }
+    .container4{
+      float: left;
+      width: 35%;
+      height: 250px;
+      z-index: 3;
+    }
+    .navigation {
+      position: relative;
+      height: 100%;
+      background-color: #19a2c6;
+      box-shadow: 0px 2px 4px #888888;
+      z-index: 6;
+    }
+    .backdrop{
+      position: relative;
+      background-color: #E1E2E1;
+      box-shadow: 0px 5px 4px #888888;
+      z-index: 5;
+    }
+    .game{
+      display: inline-block;
+      border-style: solid;
+      border-width: 5px;
+      border-color: black;
+      box-shadow: 0px 5px 4px #888888;
+    }
+    .flag{
+      width: 50px;
+      padding-top: 5px;
+      background: #d02129;
+      text-align: center;
+      height: 100%;
+      padding-right: 100px;
+      margin-left: 20px;
+      z-index: 6;
+      position: relative;
+    }
+    .pubnublogo{
+      padding-top: 5px;
+      padding-left: 20px;
+      padding-bottom: 5px;
+      z-index: 6;
+    }
+    .instructions{
+      width: 100%;
+    }
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    </style>
 </head>
 <body>
-    <style>
-        canvas {
-           float:left;
-        }
-    </style>
-    <img src="images/arrows.png" width = "35px" style="float: left">&nbsp;Arrows Keys to Move <br><br>
-    <img src="images/key.png" style="float: left">&nbsp;Work collaboratively with other players to collect the key to advance to the next level.<br><br>
-    <img src="images/coin_icon.png" style="float: left" width="25px">&nbsp;Coins are stored in a PubNub Block and game state is updated for any new player in a level. Game state resets every 60 secs.<br><br>
+  <div class="navigation">
+    <div class="flag">
+      <div class="pubnublogo">
+        <img src="images/pubnub-logo.png">
+      </div>
+    </div>
+  </div>
+  <div class="backdrop">
+    <br>
+    <center>
+      <div class="game" id="game"></div>
+    </center>
+    <br>
+    <center>Controls: <big><big>← ↑ →</big></big></center>
+    <br>
+  </div>
+  <div class="instructions">
+     <!-- <div class="container1">
+       test
+     </div>
+     <div class="container2">
+       test
+     </div>
+     <div class="container3">
+       test
+     </div>
+     <div class="container4">
+       test
+     </div> -->
+  </div>
 </body>
 </html>
