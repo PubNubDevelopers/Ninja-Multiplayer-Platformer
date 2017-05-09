@@ -1,19 +1,19 @@
+'use strict';
+
 // =============================================================================
 // Loading state
 // =============================================================================
 
-LoadingState = {}; //Create an array with all of the loading information inside of it
-
-LoadingState.init = function () {
+window.LoadingState = { // Create an object with all of the loading information inside of it
+  init() {
     // keep crispy-looking pixels
-    this.game.renderer.renderSession.roundPixels = true; //Make the phaser sprites look smoother
-};
+    this.game.renderer.renderSession.roundPixels = true; // Make the phaser sprites look smoother
+  },
 
-LoadingState.preload = function () { 
-
+  preload() {
     this.game.stage.disableVisibilityChange = true;
 
-    //Load JSON levels
+    // Load JSON levels
     this.game.load.json('level:0', 'data/level00.json');
     this.game.load.json('level:1', 'data/level01.json');
     this.game.load.json('level:2', 'data/level02.json');
@@ -44,8 +44,9 @@ LoadingState.preload = function () {
     this.game.load.audio('sfx:stomp', 'audio/stomp.wav');
     this.game.load.audio('sfx:door', 'audio/door.wav');
     this.game.load.audio('bgm', ['audio/bgm.mp3', 'audio/bgm.ogg']);
-};
+  },
 
-LoadingState.create = function () {
-    this.game.state.start('play', true, false, {level: window.globalCurrentLevel}); //Start Game
+  create() {
+    this.game.state.start('play', true, false, { level: window.globalCurrentLevel }); // Start Game
+  }
 };
