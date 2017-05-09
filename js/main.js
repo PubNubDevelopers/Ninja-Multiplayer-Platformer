@@ -165,23 +165,23 @@ window.createMyPubNub = function (currentLevel) {
   window.pubnub.addListener(window.listener);
 };
 
-window.sendKeyMessage = (keyMessage) => {
-  if (window.globalMyHero) {
-    window.pubnub.publish({
-      message: {
-        uuid: window.UniqueID,
-        keyMessage,
-        position: window.globalMyHero.body.position,
-        frameCounter: window.frameCounter
-      },
-      channel: window.currentChannelName,
-      sendByPost: false, // true to send via posts
-    });
-    // console.log("send message!")
-  } else {
-  // console.log("Player doesn't exsist so don't set position")
-  }
-};
+  window.sendKeyMessage = (keyMessage) => {
+    if (window.globalMyHero.body.position) {
+      window.pubnub.publish({
+        message: {
+          uuid: window.UniqueID,
+          keyMessage,
+          position: window.globalMyHero.body.position,
+          frameCounter: window.frameCounter
+        },
+        channel: window.currentChannelName,
+        sendByPost: false, // true to send via posts
+      });
+      // console.log("send message!")
+    } else {
+    // console.log("Player doesn't exsist so don't set position")
+    }
+  };
 
 window.fireCoins = () => {
   const message = {
@@ -221,7 +221,7 @@ window.addEventListener('load', () => {
   game.state.disableVisibilityChange = true; // This allows two windows to be open at the same time and allow both windows to run the update function
   game.state.add('play', window.PlayState);
   game.state.add('loading', window.LoadingState);
-  window.createMyPubNub(0); // Connect to the pubnub network and run level code 0
+  window.createMyPubNub(1); // Connect to the pubnub network and run level code 0
   window.StartLoading = function () {
     game.state.start('loading'); // Run the loading function once you successfully connect to the pubnub network
   };
