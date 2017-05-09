@@ -166,25 +166,23 @@ window.createMyPubNub = function (currentLevel) {
 };
 
   window.sendKeyMessage = (keyMessage) => {
-    if (window.globalMyHero.body.position) {
       try {
-        window.pubnub.publish({
-          message: {
-            uuid: window.UniqueID,
-            keyMessage,
-            position: window.globalMyHero.body.position,
-            frameCounter: window.frameCounter
-          },
-          channel: window.currentChannelName,
-          sendByPost: false, // true to send via posts
-        });
-        // console.log("send message!")
+        if (window.globalMyHero) {
+          window.pubnub.publish({
+            message: {
+              uuid: window.UniqueID,
+              keyMessage,
+              position: window.globalMyHero.body.position,
+              frameCounter: window.frameCounter
+            },
+            channel: window.currentChannelName,
+            sendByPost: false, // true to send via posts
+          });
+        }
+          // console.log("send message!")
       } catch (err) {
         console.log(err);
       }
-    } else {
-    // console.log("Player doesn't exsist so don't set position")
-    }
   };
 
 window.fireCoins = () => {
