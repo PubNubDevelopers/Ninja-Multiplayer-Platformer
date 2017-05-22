@@ -7,6 +7,9 @@
 * [Introduction to Phaser](#phaser)
 * [Introduction to PubNub](#pubnub)
 * [Getting Started](#getting-started)
+* [Code Layout](#code-layout)
+* [Main.js](#main.js)
+* [loadingState.js](#loadingState.js)
 * [Credits](#credits)
 
 ## <a name="synopsis"></a>Synopsis
@@ -14,7 +17,7 @@ Creating a real time multiplayer game can be a daunting task to take on alone.  
 
 This Ninja Platformer Multiplayer Game is written in javascript and the levels are generated via JSON files with information on the position of the platforms and game objects.
 
-This real time multiplayer game is a collaborative puzzle game that encourages you to work with your friends to collect the keys in clever ways.  Using Phasers Arcade Physics Library, each character and object has its own physics body with its own set of physics properties.  Open up a few browser windows to test out the real time functionailty of the application.
+This real time multiplayer game is a collaborative puzzle game that encourages you to work with your friends to collect the keys in clever ways.  Using Phasers Arcade Physics Library, each character and object has its own physics body with its own set of physics properties.  Open up a few browser windows to test out the real time functionality of the application.
 
 Don’t forget to give it a star and a fork.  It will be exciting to see what you guys can make from this example since it has so much room for expansion. 
 
@@ -28,22 +31,225 @@ PubNub’s Pub/Sub and Presence is used in this demo to send information on play
 
 ## <a name="getting-started"></a> Getting Started
 In order to start the development process, you are going to need a few things:
-* A text editor (I recommend <https://www.sublimetext.com/>)
+* A text editor ( I recommend https://atom.io/ or <https://www.sublimetext.com/> )
 * Terminal / Console
 * A local web server (then eventually a public web server to share your project with friends)
 * A PubNub Account (<a href="http://pubnub.com">Sign Up for Free</a>)
 
 Create a new folder anywhere you wish, for simplicity create it on your Desktop.  If you have Mac OS or Linux (or have Python installed), open up your Terminal Application and type in:
 
-``
+```python
 python -m SimpleHTTPServer 8000
-``
+```
 
 If you are using Windows download <a href="https://www.apachefriends.org/index.html">XAMPP</a>.  There are some great tutorials out there on how to setup XAMPP on your machine.
 
 Once you have your server up and running, go to ``http://localhost:8000/`` on your machine and navigate to your project directory.  You are ready to start coding! 
 
-Now in order to get you setup with PubNub, navigate to the <a href="http://pubnub.com">PubNub Website</a> and create an account with your Google login.  Once you are in the dashboard, name your application whatever you wish, and click the Create New App button.  Once you create the application, click on the application to few the key information.  You should see that you have two keys, a Publish Key, and a Subscribe Key.  Click on the demo keyset, and it should load up a page that shows your keys in addition to Application Add-Ons.  In the Application Add-Ons section, turn <b>ON</b> <em>Presence</em> and check <b>Generate Leave on TCP FIN or RST</b> and <b>Global Here Now</b>.  Also turn <b>ON</b> <em>PubNub Blocks</em>.  Leave the page open for future reference once we start writting our code, we are going to need those PubNub keys!
+Now in order to get you setup with PubNub, navigate to the <a href="http://pubnub.com">PubNub Website</a> and create an account with your Google login.  Once you are in the dashboard, name your application whatever you wish, and click the Create New App button.  Once you create the application, click on the application to few the key information.  You should see that you have two keys, a Publish Key, and a Subscribe Key.  Click on the demo keyset, and it should load up a page that shows your keys in addition to Application Add-Ons.  In the Application Add-Ons section, turn <b>ON</b> <em>Presence</em> and check <b>Generate Leave on TCP FIN or RST</b> and <b>Global Here Now</b>.  Also turn <b>ON</b> <em>PubNub Blocks</em>. Make sure to have access manager turned off or else the sample code won't work since you need to include a secret key. Leave the page open for future reference once we start writing our code, we are going to need those PubNub keys!
+
+## <a name="code-layout"></a> Code Layout
+
+This game is split up into four main documents, `main.js` , `loadingState.js` , `playstate.js` , `heroScript.js` , and then the server code for PubNub blocks called `blockscode.js`.  `main.js` loads all of the other files internally.
+
+## <a name="main.js"></a> Main.js
+
+`main.js` is loaded from `index.html`.  First all of the global variables are loaded into the document.  I am using `window` to define the global variables.  I set `window.UniqueID` by calling the `PubNub.generateUUID()` function.  When the game loads, it first generates the unique ID of the device that way no two players share the same information.  
+
+```javascript
+window.syncOtherPlayerFrameDelay = 0; //30 frames allows for 500ms of network jitter, to prevent late frames
+window.currentChannelName; // Global variable for the current channel that your player character is on
+window.currentFireChannelName; // Global variable that checks the current stage you are on to send the correct information to the PubNub Block
+window.globalCurrentLevel = 0; // Global variable for the current level (index starts at 0)
+window.UniqueID = window.PubNub.generateUUID(); // Generate a unique id for the player. Generated by the PubNub Network
+window.globalLevelState = null; // Sets the globalLevelState to null if you aren't connected to the network. Once connected, the level will generate to the info that was on the block.
+window.globalWasHeroMoving = true;
+window.text1 = 'Level 1 Occupancy: 0'; // Global text objects for occupancy count
+window.text2 = 'Level 2 Occupancy: 0';
+window.text3 = 'Level 3 Occupancy: 0';
+let textResponse1;
+let textResponse2;
+let textResponse3;
+window.updateOccupancyCounter = false; // Occupancy Counter variable to check if the timer has already been called in that scene
+window.keyMessages = [];
+```
+
+Then we load the external Javascript files:
+
+```javascript
+// Load External Javascript files
+const loadHeroScript = document.createElement('script');
+loadHeroScript.src = './js/heroScript.js';
+document.head.appendChild(loadHeroScript);
+
+const loadLoadingState = document.createElement('script');
+loadLoadingState.src = './js/loadingState.js';
+document.head.appendChild(loadLoadingState);
+
+const loadPlaystate = document.createElement('script');
+loadPlaystate.src = './js/playState.js';
+document.head.appendChild(loadPlaystate);
+```
+
+After the other javascript files have been loaded, we call the function (promise)  `window.addEventListener`.  The function creates the phaser window, adds the various game states, then calls the `window.createMyPubNub` function and passes `0` which tells the game to load the level 0 json file (or pull it from the PubNub blocks server if it exists).  
+
+```javascript
+window.addEventListener('load', () => {
+  const game = new window.Phaser.Game(960, 600, window.Phaser.AUTO, 'game');
+  game.state.disableVisibilityChange = true; // This allows two windows to be open at the same time and allow both windows to run the update function
+  game.state.add('play', window.PlayState);
+  game.state.add('loading', window.LoadingState);
+  window.createMyPubNub(0); // Connect to the pubnub network and run level code 0
+  window.StartLoading = function () {
+    game.state.start('loading'); // Run the loading function once you successfully connect to the pubnub network
+  };
+});
+```
+
+Now we create the global variables for what level the device is on and also generate the channel names according to the current level the user is loaded into.  Next, you need to go into your PubNub admin console and get your Pub/Sub keys and replace them with the demo keys here.  After the PubNub API is initialized, we subscribe to messages sent on whatever level we are currently on. The first part of the function `window.createMyPubNub` is coded as follows:
+
+```javascript
+window.createMyPubNub = function (currentLevel) {
+  window.globalCurrentLevel = currentLevel; // Get the current level and set it to the global level
+  window.currentFireChannelName = 'realtimephaserFire2';
+  window.currentChannelName = `realtimephaser${currentLevel}`; // Create the channel name + the current level. This way each level is on its own channel.
+  let checkIfJoined = false; // If player has joined the channel
+
+  // Setup your PubNub Keys
+  window.pubnub = new window.PubNub({
+    publishKey: 'demo',
+    subscribeKey: 'demo',
+    uuid: window.UniqueID,
+  });
+
+  // Subscribe to the two PubNub Channels
+  window.pubnub.subscribe({
+    channels: [window.currentChannelName, window.currentFireChannelName],
+    withPresence: true,
+  });
+```
+
+There is plenty of more code in the `window.listener` function which is called when a PubNub message is recieved on the channel you are subscribed too.  However for now, lets skip that code and add a listener for when a user leaves the window.  Also we use the `navigator.sendBeacon` to call the PubNub unsubscribe function even if the `globalUnsubscribe()` function isn't able to run.
+
+```javascript
+// If person leaves or refreshes the window, run the unsubscribe function
+  window.addEventListener('beforeunload', () => {
+    navigator.sendBeacon(`https://pubsub.pubnub.com/v2/presence/sub_key/mySubKey/channel/ch1/leave?uuid=${window.UniqueID}`); // pub
+    window.globalUnsubscribe();
+  });
+```
+
+We then create the `window.globalUnsubscribe` function which also has the code to start listening to the listener PubNub function.
+
+```javascript
+// Unsubscribe people from PubNub network
+  window.globalUnsubscribe = function () {
+    try {
+      window.pubnub.unsubscribe({
+        channels: [window.currentChannelName, window.currentFireChannelName],
+        withPresence: true
+      });
+      window.pubnub.removeListener(window.listener);
+    } catch (err) {
+      // console.log(err);
+    }
+  };
+  window.pubnub.addListener(window.listener);
+};
+```
+
+Next we are going to create the `window.sendKeyMessage` function.  This function publishes a message containing all of the player movement information and the framecount information.  This function is global and is called from other .js files such as `playState.js`.  The `window.fireCoins` function sends a message using PubNub's fire message API which only publishes to the Block server.  The information sent contains information about the current level, the time at which you join the level, and if you have any cache information about the level.  We send this information on a seperate channel.
+
+```javascript
+  window.sendKeyMessage = (keyMessage) => {
+      try {
+        if (window.globalMyHero) {
+          window.pubnub.publish({
+            message: {
+              uuid: window.UniqueID,
+              keyMessage,
+              position: window.globalMyHero.body.position,
+              frameCounter: window.frameCounter
+            },
+            channel: window.currentChannelName,
+            sendByPost: false, // true to send via posts
+          });
+        }
+      } catch (err) {
+        console.log(err);
+      }
+  };
+
+window.fireCoins = () => {
+  const message = {
+    uuid: window.UniqueID,
+    coinCache: window.globalLevelState.coinCache,
+    currentLevel: window.globalCurrentLevel,
+    time: window.globalLastTime
+  };
+  window.pubnub.fire(
+    {
+      message,
+      channel: window.currentFireChannelName,
+      sendByPost: false, // true to send via posts
+    });
+};
+```
+
+After this code has been executed, the `window.StartLoading` function will be called which will load the document `loadingState.js`.
+
+## <a name="loadingState.js"></a> loadingState.js
+
+All the `loadingState.js` does is load assets into the game.  This is all using the phaser API's.  After all the assets have been loaded into the game, we call `this.game.state.start` to launch the `playState.js` file.
+
+```javascript
+window.LoadingState = { // Create an object with all of the loading information inside of it
+  init() {
+    // keep crispy-looking pixels
+    this.game.renderer.renderSession.roundPixels = true; // Make the phaser sprites look smoother
+  },
+
+  preload() {
+    this.game.stage.disableVisibilityChange = true;
+
+    // Load JSON levels
+    this.game.load.json('level:0', 'data/level00.json');
+    this.game.load.json('level:1', 'data/level01.json');
+    this.game.load.json('level:2', 'data/level02.json');
+
+
+    this.game.load.image('font:numbers', 'images/numbers.png');
+    this.game.load.image('icon:coin', 'images/coin_icon.png');
+    this.game.load.image('background', 'images/bg.png');
+    this.game.load.image('invisible-wall', 'images/invisible_wall.png');
+    this.game.load.image('ground', 'images/ground.png');
+    this.game.load.image('grass:8x1', 'images/grass_8x1.png');
+    this.game.load.image('grass:6x1', 'images/grass_6x1.png');
+    this.game.load.image('grass:4x1', 'images/grass_4x1.png');
+    this.game.load.image('grass:2x1', 'images/grass_2x1.png');
+    this.game.load.image('grass:1x1', 'images/grass_1x1.png');
+    this.game.load.image('key', 'images/key.png');
+
+    this.game.load.spritesheet('decoration', 'images/decor.png', 42, 42);
+    this.game.load.spritesheet('herodude', 'images/hero.png', 36, 42);
+    this.game.load.spritesheet('hero', 'images/gameSmall.png', 36, 42);
+    this.game.load.spritesheet('coin', 'images/coin_animated.png', 22, 22);
+    this.game.load.spritesheet('door', 'images/door.png', 42, 66);
+    this.game.load.spritesheet('icon:key', 'images/key_icon.png', 34, 30);
+
+    this.game.load.audio('sfx:jump', 'audio/jump.wav');
+    this.game.load.audio('sfx:coin', 'audio/coin.wav');
+    this.game.load.audio('sfx:key', 'audio/key.wav');
+    this.game.load.audio('sfx:stomp', 'audio/stomp.wav');
+    this.game.load.audio('sfx:door', 'audio/door.wav');
+    this.game.load.audio('bgm', ['audio/bgm.mp3', 'audio/bgm.ogg']);
+  },
+
+  create() {
+    this.game.state.start('play', true, false, { level: window.globalCurrentLevel }); // Start Game
+  }
+};
+```
 
 
 ## <a name="credits"></a>Credits
