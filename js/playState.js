@@ -3,10 +3,7 @@
 // =============================================================================
 // Play state
 // =============================================================================
-const keyStates = {
-
-};
-const LEVEL_COUNT = 2; //never used
+const keyStates = {};
 let keyCollected = false;
 
 window.frameCounter = 0;
