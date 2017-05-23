@@ -10,6 +10,8 @@
 * [Code Layout](#code-layout)
 * [Main.js](#main.js)
 * [loadingState.js](#loadingState.js)
+* [heroScript.js](#hero-script)
+* [loadingState.js](#blockscode)
 * [Credits](#credits)
 
 ## <a name="synopsis"></a>Synopsis
@@ -446,7 +448,7 @@ _handleInput() {
 
 ```
 
-## <a href="hero-script"></a>heroScript.js
+## <a name="hero-script"></a>heroScript.js
 
 `heroScript.js` is in charge of creating the sprite and adding various properties to it.  
 
