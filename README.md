@@ -531,7 +531,7 @@ window.Hero = class Hero extends window.Phaser.Sprite {
 
 ## <a name="blockscode"></a>blockscode.js
 
-This is the code that is needed in order to create the PubNub Block.  We are using the <a href="https://www.pubnub.com/docs/blocks/tutorials/kv-store">KV store command</a> in Blocks to store JSON information about the level.  If JSON information already exists in the Block, it publishes the current information to anyone who fires a message to the Block.  If someone collects a coin in the game, a PubNub fire is sent to the Block, which then looks at the timetoken.  If the message is newer than the KV Store update, publish a message out to all users telling them the updated level information.
+This is the code that is needed in order to create the PubNub Block.  We are using the <a href="https://www.pubnub.com/docs/blocks/tutorials/kv-store">KV store command</a> in Blocks to store JSON information about the level.  If JSON information already exists in the Block, it publishes the current information to anyone who fires a message to the Block.  If someone collects a coin in the game, a PubNub fire is sent to the Block, which then looks at the timetoken.  If the message is newer than the KV Store update, publish a message out to all users telling them the updated level information.  When you are creating your own block, make sure to set it to Before Publish or Fire and set the channel name to whatever channel you are listening to. In my case it's realtimephaserFire2.
 
 ```javascript
 export default (request) => {
