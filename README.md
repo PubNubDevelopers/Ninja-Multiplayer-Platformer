@@ -11,7 +11,7 @@
 * [Main.js](#main.js)
 * [loadingState.js](#loadingState.js)
 * [heroScript.js](#hero-script)
-* [loadingState.js](#blockscode)
+* [blockscode.js](#blockscode)
 * [Credits](#credits)
 
 ## <a name="synopsis"></a>Synopsis
