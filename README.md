@@ -21,15 +21,15 @@ This real time multiplayer game is a collaborative puzzle game that encourages y
 
 Don’t forget to give it a star and a fork.  It will be exciting to see what you guys can make from this example since it has so much room for expansion. 
 
-## <a name="phaser"></a> Phaser
+## <a name="phaser"></a>Phaser
 Phaser is a fast, free, and fun open source HTML5 game framework. It uses a custom build of Pixi.js for WebGL and Canvas rendering, and supports desktop and mobile web browsers. Games can be compiled to iOS, Android and native desktop apps via 3rd party tools. You can use JavaScript or TypeScript for development.  <a href="http://phaser.io/">Learn More</a>
 
-## <a name="pubnub"></a> PubNub
+## <a name="pubnub"></a>PubNub
 PubNub is a global Data Stream Network (DSN) that allows developers to build realtime web, mobile, IoT applications and real time games.  PubNub API's include a Publish/Subscribe messaging service.  Clients subscribe to a channel name, and any clients that are connected will receive any publish messages sent on that channel.  In addition PubNub offers online presence detection that tracks the online and offline statues of users and devices in realtime. Furthermore, PubNub offers a service called PubNub Blocks which allows developers to customize the data stream in Javascript.  
 
 PubNub’s Pub/Sub and Presence is used in this demo to send information on player movements and occupancy in each level.  PubNub Blocks is used as a state machine to detect if the coins of been collected by a player in each level.  PubNub Blocks updates the JSON level object depending upon what actions the players take in the game.  <a href="http://pubnub.com">Learn More</a>
 
-## <a name="getting-started"></a> Getting Started
+## <a name="getting-started"></a>Getting Started
 In order to start the development process, you are going to need a few things:
 * A text editor ( I recommend https://atom.io/ or <https://www.sublimetext.com/> )
 * Terminal / Console
@@ -48,11 +48,11 @@ Once you have your server up and running, go to ``http://localhost:8000/`` on yo
 
 Now in order to get you setup with PubNub, navigate to the <a href="http://pubnub.com">PubNub Website</a> and create an account with your Google login.  Once you are in the dashboard, name your application whatever you wish, and click the Create New App button.  Once you create the application, click on the application to few the key information.  You should see that you have two keys, a Publish Key, and a Subscribe Key.  Click on the demo keyset, and it should load up a page that shows your keys in addition to Application Add-Ons.  In the Application Add-Ons section, turn <b>ON</b> <em>Presence</em> and check <b>Generate Leave on TCP FIN or RST</b> and <b>Global Here Now</b>.  Also turn <b>ON</b> <em>PubNub Blocks</em>. Make sure to have access manager turned off or else the sample code won't work since you need to include a secret key. Leave the page open for future reference once we start writing our code, we are going to need those PubNub keys!
 
-## <a name="code-layout"></a> Code Layout
+## <a name="code-layout"></a>Code Layout
 
 This game is split up into four main documents, `main.js` , `loadingState.js` , `playstate.js` , `heroScript.js` , and then the server code for PubNub blocks called `blockscode.js`.  `main.js` loads all of the other files internally.
 
-## <a name="main.js"></a> Main.js
+## <a name="main.js"></a>Main.js
 
 `main.js` is loaded from `index.html`.  First all of the global variables are loaded into the document.  I am using `window` to define the global variables.  I set `window.UniqueID` by calling the `PubNub.generateUUID()` function.  When the game loads, it first generates the unique ID of the device that way no two players share the same information.  
 
@@ -198,7 +198,7 @@ window.fireCoins = () => {
 
 After this code has been executed, the `window.StartLoading` function will be called which will load the document `loadingState.js`.
 
-## <a name="loadingState.js"></a> loadingState.js
+## <a name="loadingState.js"></a>loadingState.js
 
 All the `loadingState.js` does is load assets into the game.  This is all using the phaser API's.  After all the assets have been loaded into the game, we call `this.game.state.start` to launch the `playState.js` file.
 
@@ -251,6 +251,327 @@ window.LoadingState = { // Create an object with all of the loading information 
 };
 ```
 
+## <a name="playState.js"></a>playState.js
+
+`playState.js` is responsible for most of gameplay logic and processes the information on player movements.  First we need to create some var's and create a function to log the current game state of the coins.  In this function, the coins will be spliced from the json array everytime a hero collides with a coin object.  That information is then fired to the PubNub Blocks server for processing  
+
+```javascript
+const keyStates = {};
+let keyCollected = false;
+window.frameCounter = 0;
+
+function logCurrentStateCoin(game, coin) {
+  // Log Current Game State of Collected Coins
+  for (const value of window.globalLevelState.coinCache.coins) {
+    if (coin.x === value.x) {
+      window.globalLevelState.coinCache.coins.splice(window.globalLevelState.coinCache.coins.indexOf(value), 1);
+      // console.log(value)
+    }
+  }
+  window.fireCoins();
+  // console.log(window.globalLevelState.coinCache.coins)
+}
+```
+
+The `handleKeyMessages()` function handles the frame counting and moving the players on screen.  The first part of the `handleKeyMessages()` function checks to see if the message is on the correct channel, and if the message isn't from your UUID, set the position to whatever the message's X & y
+
+```javascript
+function handleKeyMessages() {
+  const earlyMessages = [];
+  const lateMessages = [];
+  window.keyMessages.forEach((messageEvent) => {
+    if (window.globalOtherHeros) { // If player exists
+      if (messageEvent.channel === window.currentChannelName) { // If the messages channel is equal to your current channel
+        if (!window.globalOtherHeros.has(messageEvent.message.uuid)) { // If the message isn't equal to your uuid
+          window.globalGameState._addOtherCharacter(messageEvent.message.uuid); // Add another player to the game that is not yourself
+
+          const otherplayer = window.globalOtherHeros.get(messageEvent.message.uuid);
+          otherplayer.position.set(messageEvent.message.position.x, messageEvent.message.position.y); // set the position of each player according to x y
+          otherplayer.initialRemoteFrame = messageEvent.message.frameCounter;
+          otherplayer.initialLocalFrame = window.frameCounter;
+          window.sendKeyMessage({}); // Send publish to all clients about user information
+        }
+```
+
+ The next part of the `handKeyMessages()` function handles when you recieve a message with a UUID that exists in the current level.  The function then creates variables to handle the frameDelay function.  This function creates artifical lag to ensure that the other players movements are smooth and clean.  It uses delta calculations to sync up the different clients frames to make sure that everyone is in sync with eachother.  If one client is out of sync, it will auto sync up as fast as possible once it recieves a message from another client.  
+ 
+```javascript
+        if (messageEvent.message.position && window.globalOtherHeros.has(messageEvent.message.uuid)) { // If the message contains the position of the player and the player has a uuid that matches with one in the level
+          window.keyMessages.push(messageEvent);
+          const otherplayer = window.globalOtherHeros.get(messageEvent.message.uuid);
+          const frameDelta = messageEvent.message.frameCounter - otherplayer.lastKeyFrame;
+          const initDelta = otherplayer.initialRemoteFrame - otherplayer.initialLocalFrame;
+          const frameDelay = (messageEvent.message.frameCounter - window.frameCounter) - initDelta + window.syncOtherPlayerFrameDelay;
+          if (frameDelay > 0) {
+            if (!messageEvent.hasOwnProperty('frameDelay')) {
+              messageEvent.frameDelay = frameDelay;
+              otherplayer.totalRecvedFrameDelay += frameDelay;
+              otherplayer.totalRecvedFrames++;
+            }
+            earlyMessages.push(messageEvent);
+            return;
+          } else if (messageEvent.message.keyMessage.stopped === 'not moving') {
+            // console.log('initDelta', initDelta, 'stopping player');
+            otherplayer.body.position.set(messageEvent.message.position.x, messageEvent.message.position.y);
+            otherplayer.body.velocity.set(0, 0);
+            otherplayer.goingLeft = false;
+            otherplayer.goingRight = false;
+            if (otherplayer.totalRecvedFrames > 0) {
+              const avgFrameDelay = otherplayer.totalRecvedFrameDelay / otherplayer.totalRecvedFrames;
+              const floorFrameDelay = Math.floor(avgFrameDelay);
+              otherplayer.initialRemoteFrame += floorFrameDelay - 7;
+              // console.log('avg frame delay', avgFrameDelay, 'adjusting delta', floorFrameDelay);
+            }
+            otherplayer.totalRecvedFrameDelay = 0;
+            otherplayer.totalRecvedFrames = 0;
+          } else if (frameDelay < 0) {
+            otherplayer.totalRecvedFrameDelay += frameDelay;
+            otherplayer.totalRecvedFrames++;
+            lateMessages.push(messageEvent);
+            // console.log('initDelta', initDelta, 'late', frameDelay);
+            return;
+          } else {
+          //console.log('initDelta', initDelta, 'ontime', frameDelay);
+          }
+
+          otherplayer.lastKeyFrame = messageEvent.message.frameCounter;
+```
+
+The following code checks to see if the message is equal to the various states.  For instance if a player presses the down key, it will then run this function once the message from PubNub is recieved.  Then it will run the jump function for that player.  
+
+```javascript
+          if (messageEvent.message.keyMessage.up === 'down') { // If message equals arrow up, make the player jump with the correct UUID
+            otherplayer.jump();
+            otherplayer.jumpStart = Date.now();
+          } else if (messageEvent.message.keyMessage.up === 'up') {
+            otherplayer.jumpStart = 0;
+          }
+          if (messageEvent.message.keyMessage.left === 'down') { // If message equals arrow left, make the player move left with the correct UUID
+            otherplayer.goingLeft = true;
+          } else if (messageEvent.message.keyMessage.left === 'up') {
+            otherplayer.goingLeft = false;
+          }
+          if (messageEvent.message.keyMessage.right === 'down') { // If message equals arrow down, make the player move right with the correct UUID
+            otherplayer.goingRight = true;
+          } else if (messageEvent.message.keyMessage.right === 'up') {
+            otherplayer.goingRight = false;
+          }
+        }
+      }
+    }
+  });
+
+  if (lateMessages.length > 0) {
+  //console.log({ lateMessages, earlyMessages });
+  }
+  window.keyMessages.length = 0;
+  earlyMessages.forEach((em) => {
+    window.keyMessages.push(em);
+  });
+};
+```
+
+The rest of the `playState.js` involves spawning the various assets into the level.  However there is the section that is responsible for handling key press events.  `_handleInput()` controls all of the key press events.
+
+```javascript
+_handleInput() {
+    handleKeyMessages();
+    if (this.hero) { // Added this so we can control spawning of heros
+      if (this.keys.left.isDown) {
+        if (!keyStates.leftIsDown) {
+          window.sendKeyMessage({ left: 'down' }); // Left Button Pushed Down
+        }
+        keyStates.leftIsDown = true;
+      } else {
+        if (keyStates.leftIsDown) {
+          window.sendKeyMessage({ left: 'up' }); // Left Button Released
+        }
+        keyStates.leftIsDown = false;
+      }
+
+      if (this.keys.right.isDown) {
+        if (!keyStates.rightIsDown) {
+          window.sendKeyMessage({ right: 'down' }); // Right Button Pushed Down
+        }
+        keyStates.rightIsDown = true;
+      } else {
+        if (keyStates.rightIsDown) {
+          window.sendKeyMessage({ right: 'up' }); // Right Button Released
+        }
+        keyStates.rightIsDown = false;
+      }
+
+      if (this.hero.body.touching.down) {
+        if (this.keys.up.isDown) {
+          if (!keyStates.upIsDown) {
+            window.sendKeyMessage({ up: 'down' }); // Up Button Pushed Down
+            window.globalMyHero.jump();
+          }
+          keyStates.upIsDown = true;
+        } else {
+          if (keyStates.upIsDown) {
+            window.sendKeyMessage({ up: 'up' }); // Up Button Released
+          }
+          keyStates.upIsDown = false;
+        }
+      }
+
+      if (this.keys.left.isDown) { // move hero left
+        this.hero.move(-1);
+      } else if (this.keys.right.isDown) { // move hero right
+        this.hero.move(1);
+      } else { // stop
+        this.hero.move(0);
+      }
+      
+      for (const uuid of window.globalOtherHeros.keys()) {
+        const otherplayer = window.globalOtherHeros.get(uuid);
+        if (otherplayer.goingLeft) { // move hero left
+          otherplayer.move(-1);
+        } else if (otherplayer.goingRight) { // move hero right
+          otherplayer.move(1);
+        } else { // stop
+          otherplayer.move(0);
+        }
+      }
+    }
+
+  if (window.globalWasHeroMoving && this.hero.body.velocity.x === 0 && this.hero.body.velocity.y === 0 && this.hero.body.touching.down) {
+    window.sendKeyMessage({ stopped: 'not moving' });
+    window.globalWasHeroMoving = false;
+  } else if (window.globalWasHeroMoving || this.hero.body.velocity.x !== 0 || this.hero.body.velocity.y !== 0 || !this.hero.body.touching.down) {
+    window.globalWasHeroMoving = true;
+  }
+},
+
+```
+
+## <a href="hero-script"></a>heroScript.js
+
+`heroScript.js` is in charge of creating the sprite and adding various properties to it.  
+
+```javascript
+window.Hero = class Hero extends window.Phaser.Sprite {
+  constructor(game) {
+    super();
+    window.Phaser.Sprite.call(this, game, 10, 523, 'hero');
+    // anchor
+    this.anchor.set(0.5, 0.5);
+    // physics properties
+    this.game.physics.enable(this);
+    this.body.collideWorldBounds = true;
+    // animations
+    this.animations.add('stop', [0]);
+    this.animations.add('run', [1, 2], 8, true); // 8fps looped
+    this.animations.add('jump', [3]);
+    this.animations.add('fall', [4]);
+    // starting animation
+    this.animations.play('stop');
+  }
+
+  move(direction) {
+    // guard
+    if (this.isFrozen) { return; }
+    const SPEED = 200;
+
+    this.body.velocity.x = direction * SPEED;
+
+    // update image flipping & animations
+    if (this.body.velocity.x < 0) {
+      this.scale.x = -1;
+    } else if (this.body.velocity.x > 0) {
+      this.scale.x = 1;
+    }
+  }
+
+  jump() {
+    // Hero jumping code
+    const JUMP_SPEED = 600;
+    const canJump = this.body.touching.down && this.alive && !this.isFrozen;
+
+    if (canJump || this.isBoosting) {
+      this.body.velocity.y = -JUMP_SPEED;
+      this.isBoosting = true;
+    }
+    return canJump;
+  }
+
+  update() {
+    // update sprite animation, if it needs changing
+    const animationName = this._getAnimationName();
+    if (this.animations.name !== animationName) {
+      this.animations.play(animationName);
+    }
+  }
+
+  freeze() { // When player goes through door do animation and remove player
+    this.body.enable = false;
+    this.isFrozen = true;
+  }
+
+  // returns the animation name that should be playing depending on
+  // current circumstances
+  _getAnimationName() {
+    let name = 'stop'; // default animation
+    if (this.isFrozen) {
+      name = 'stop';
+    } else if (this.body.velocity.y < 0) {
+      name = 'jump';
+    } else if (this.body.velocity.y >= 0 && !this.body.touching.down) {
+      name = 'fall';
+    } else if (this.body.velocity.x !== 0 && this.body.touching.down) {
+      name = 'run';
+    }
+    return name;
+  }
+};
+```
+
+## <a name="blockscode"></a>blockscode.js
+
+This is the code that is needed in order to create the PubNub Block.  We are using the <a href="https://www.pubnub.com/docs/blocks/tutorials/kv-store">KV store command</a> in Blocks to store JSON information about the level.  If JSON information already exists in the Block, it publishes the current information to anyone who fires a message to the Block.  If someone collects a coin in the game, a PubNub fire is sent to the Block, which then looks at the timetoken.  If the message is newer than the KV Store update, publish a message out to all users telling them the updated level information.
+
+```javascript
+export default (request) => {
+  const pubnub = require('pubnub');
+  const db = require('kvstore');
+
+  const keyName = `gamestate2_${request.message.currentLevel}`;
+  if (request.message.int || request.message.fromServer) {
+    return request.ok(); // Return a promise when you're done
+  }
+  if (request.message.requestInt) {
+    db.get(keyName).then((value) => {
+      pubnub.publish({
+        channel: 'realtimephaserFire2',
+        message: {
+          value,
+          int: true,
+          sendToRightPlayer: request.message.uuid
+        }
+      }).then((publishResponse) => {
+          // console.log(publishResponse);
+      });
+    });
+    return request.ok(); // Return a promise when you're done
+  }
+  pubnub.time().then((timetoken) => {
+    db.get(keyName).then((value) => {
+      if (value === null || value.time < request.message.time || true) {
+        value = { time: timetoken, coinCache: request.message.coinCache };
+        db.set(keyName, value, 1);
+      }
+      pubnub.publish({
+        channel: 'realtimephaserFire2',
+        message: { value, fromServer: true }
+      }).then((publishResponse) => {
+        // console.log(publishResponse);
+      });
+    });
+  });
+  return request.ok(); // Return a promise when you're done
+};
+```
 
 ## <a name="credits"></a>Credits
 * <a href="https://github.com/JordanSchuetz">Jordan Schuetz </a>(Contact me if you have questions <schuetz@pubnub.com>)
