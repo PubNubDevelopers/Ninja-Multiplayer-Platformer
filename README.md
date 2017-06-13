@@ -1,6 +1,6 @@
 # Ninja Multiplayer Platformer Game in Real Time #
 
-## Play Now: https://pubnub.github.io/Ninja-Multiplayer-Platformer/
+## Play Now: https://pubnub-dsn.github.io/Ninja-Multiplayer-Platformer/
 ```
 npm install pubnubninja
 ```
