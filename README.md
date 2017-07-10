@@ -6,6 +6,10 @@ npm install pubnubninja
 ```
 ![Screenshot](readmepics/screenshot1.png)
 
+A step by step tutorial of how to create this multiplayer game is available here: 
+
+https://github.com/pubnub-dsn/Ninja-Multiplayer-Platformer/blob/master/TUTORIAL.md
+
 ## Table of Contents
 * [Synopsis](#synopsis)
 * [Introduction to Phaser](#phaser)
