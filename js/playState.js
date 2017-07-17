@@ -5,6 +5,10 @@
 // =============================================================================
 const keyStates = {};
 let keyCollected = false;
+var leftSideDown;
+var jumpVar = true;
+var leftSideVar = true;
+var rightSideVar = true;
 
 window.frameCounter = 0;
 
@@ -62,7 +66,7 @@ function handleKeyMessages() {
             //console.log('early', frameDelay);
             return;
           } else if (messageEvent.message.keyMessage.stopped === 'not moving') {
-            console.log('initDelta', initDelta, 'stopping player');
+            //console.log('initDelta', initDelta, 'stopping player');
             otherplayer.body.position.set(messageEvent.message.position.x, messageEvent.message.position.y);
             otherplayer.body.velocity.set(0, 0);
             otherplayer.goingLeft = false;
@@ -73,7 +77,7 @@ function handleKeyMessages() {
             //console.log('otherplayer.initialRemoteFrame before', otherplayer.initialRemoteFrame);
               otherplayer.initialRemoteFrame += floorFrameDelay - 7;
             //console.log('otherplayer.initialRemoteFrame after', otherplayer.initialRemoteFrame);
-              console.log('avg frame delay', avgFrameDelay, 'adjusting delta', floorFrameDelay);
+              //console.log('avg frame delay', avgFrameDelay, 'adjusting delta', floorFrameDelay);
             }
             otherplayer.totalRecvedFrameDelay = 0;
             otherplayer.totalRecvedFrames = 0;
@@ -81,7 +85,7 @@ function handleKeyMessages() {
             otherplayer.totalRecvedFrameDelay += frameDelay;
             otherplayer.totalRecvedFrames++;
             lateMessages.push(messageEvent);
-            console.log('initDelta', initDelta, 'late', frameDelay);
+            //console.log('initDelta', initDelta, 'late', frameDelay);
             return;
           } else {
           //console.log('initDelta', initDelta, 'ontime', frameDelay);
@@ -207,6 +211,54 @@ window.PlayState = {
     handleKeyMessages();
     //  logCurrentState(this.game);
     if (this.hero) { // Added this so we can control spawning of heros
+      // Mobile Controls
+        if(this.game.input.activePointer.x < 399 && (this.game.input.activePointer.y > 400) && this.game.input.activePointer.isDown)
+        {    
+          console.log("isDown")
+          if (leftSideVar === true){
+            leftSideVar = false
+            window.sendKeyMessage({ left: 'down' });
+            console.log("leftDown")
+          }
+        }
+        if(this.game.input.activePointer.isUp && leftSideVar === false)
+        {  
+          leftSideVar = true;  
+          window.sendKeyMessage({ left: 'up' });
+          console.log("leftUp")
+        }
+        if(this.game.input.activePointer.x > 400 && (this.game.input.activePointer.y > 400) && this.game.input.activePointer.isDown)           
+        {                
+          if (rightSideVar === true){
+            rightSideVar = false
+            window.sendKeyMessage({ right: 'down' });
+            console.log("rightDown")
+          }          
+        }
+        if(this.game.input.activePointer.isUp && rightSideVar === false)
+        {  
+          rightSideVar = true;  
+          window.sendKeyMessage({ right: 'up' });
+          console.log("rightUp")
+        }
+        if((this.game.input.activePointer.y < 401) && this.game.input.activePointer.isDown)
+        {
+          if (this.hero.body.touching.down) {
+            console.log("jump")
+            if(jumpVar === true){
+              jumpVar = false;
+              window.sendKeyMessage({ up: 'down' });
+              window.globalMyHero.jump();
+            }
+          }
+        }
+        if(this.game.input.activePointer.isUp && jumpVar === false)
+        {  
+          jumpVar = true;  
+          window.sendKeyMessage({ up: 'up' });
+        }
+      ///
+
       if (this.keys.left.isDown) {
         if (!keyStates.leftIsDown) {
           // console.log('left pushed');
@@ -251,9 +303,9 @@ window.PlayState = {
         }
       }
 
-      if (this.keys.left.isDown) { // move hero left
+      if (this.keys.left.isDown || (this.game.input.activePointer.x < 399 && (this.game.input.activePointer.y > 400) && this.game.input.activePointer.isDown)) { // move hero left
         this.hero.move(-1);
-      } else if (this.keys.right.isDown) { // move hero right
+      } else if (this.keys.right.isDown || ((this.game.input.activePointer.y > 400) && this.game.input.activePointer.isDown)) { // move hero right
         this.hero.move(1);
       } else { // stop
         this.hero.move(0);
