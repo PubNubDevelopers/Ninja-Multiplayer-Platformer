@@ -50,6 +50,7 @@ window.Hero = class Hero extends window.Phaser.Sprite {
     if (canJump || this.isBoosting) {
       this.body.velocity.y = -JUMP_SPEED;
       this.isBoosting = true;
+      jumpVar = true;  
     }
     return canJump;
   }

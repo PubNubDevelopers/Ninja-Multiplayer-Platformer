@@ -209,10 +209,11 @@ window.PlayState = {
 
   _handleInput() {
     handleKeyMessages();
+
     //  logCurrentState(this.game);
     if (this.hero) { // Added this so we can control spawning of heros
       // Mobile Controls
-        if(this.game.input.activePointer.x < 399 && (this.game.input.activePointer.y > 400) && this.game.input.activePointer.isDown)
+        if(this.game.input.pointer1.x < 399 && (this.game.input.pointer1.y > 400) && this.game.input.pointer1.isDown)
         {    
           console.log("isDown")
           if (leftSideVar === true){
@@ -221,13 +222,13 @@ window.PlayState = {
             console.log("leftDown")
           }
         }
-        if(this.game.input.activePointer.isUp && leftSideVar === false)
+        if(this.game.input.pointer1.isUp && leftSideVar === false)
         {  
           leftSideVar = true;  
           window.sendKeyMessage({ left: 'up' });
           console.log("leftUp")
         }
-        if(this.game.input.activePointer.x > 400 && (this.game.input.activePointer.y > 400) && this.game.input.activePointer.isDown)           
+        if(this.game.input.pointer1.x > 400 && (this.game.input.pointer1.y > 400) && this.game.input.pointer1.isDown)           
         {                
           if (rightSideVar === true){
             rightSideVar = false
@@ -235,7 +236,7 @@ window.PlayState = {
             console.log("rightDown")
           }          
         }
-        if(this.game.input.activePointer.isUp && rightSideVar === false)
+        if(this.game.input.pointer1.isUp && rightSideVar === false)
         {  
           rightSideVar = true;  
           window.sendKeyMessage({ right: 'up' });
@@ -252,11 +253,11 @@ window.PlayState = {
             }
           }
         }
-        if(this.game.input.activePointer.isUp && jumpVar === false)
-        {  
-          jumpVar = true;  
-          window.sendKeyMessage({ up: 'up' });
-        }
+        //if(this.game.input.activePointer.isUp && jumpVar === false)
+        //{  
+        //  jumpVar = true;  
+       //   window.sendKeyMessage({ up: 'up' });
+       // }
       ///
 
       if (this.keys.left.isDown) {
