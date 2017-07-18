@@ -2,6 +2,10 @@
 
 ## Play Now: https://pubnub-dsn.github.io/Ninja-Multiplayer-Platformer/
 
+```
+npm install pubnubninja
+```
+
 ![Screenshot](readmepics/screenshot1.png)
 
 A step by step tutorial of how to create this multiplayer game is available here: 
