@@ -10,6 +10,9 @@ function generateName() {
 }
 
 window.initChatEngine = function() {
+    // Don't draw the Chat UI more than once
+    if (document.getElementById('chatLog')) return;
+
     var domChatContent = `
     <div class="chat-container">
         <div class="content">
