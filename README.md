@@ -1,4 +1,4 @@
-# Ninja Multiplayer Platformer Game in Real Time #
+# HTML5 Multiplayer Platformer Game in Real Time #
 
 ⚠️ This tutorial is out of date: While some information may not be entirely up to date, this article still contains valuable insights into creating an HTML5 multiplayer platformer game playable entirely in the browser. You can learn more about how PubNub powers [thousands of customers](https://www.pubnub.com/customers/) worldwide in our [PubNub for Developers](https://www.pubnub.com/developers/) resources. Have suggestions or questions about the content of this post? Reach out to devrel@pubnub.com.⚠️
 
